@@ -5,6 +5,7 @@ import random
 from tqdm import tqdm
 
 from model_architectures.bilstm import BiLSTM
+from model_architectures.res_bilstm import ResBiLSTM
 from ReadData import ReadData
 
 from keras.models import Model
@@ -20,13 +21,17 @@ parser.add_argument('--embedding_path', '-ep', default='fasttext-embedding/skipg
                     help='Path to Embedding Model | Default: fasttext-embedding/skipgram-256-news-classification.fasttext')
 parser.add_argument('--embedding_type', '-et', default='fasttext', help='Embedding type [fasttext] | Default: fasttext')
 parser.add_argument('--no_classes', '-c', default=4, help='Number of Classes | Default: 4', type=int)
+parser.add_argument('--hidden_size', '-hs', default=256, help='Hidden Size of LSTM Cell | Default: 256', type=int)
 
 args = parser.parse_args()
 
-hidden_size = 512
+hidden_size = args.hidden_size
 if args.model == 'bilstm':
     inputs = (400, 256)
     model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+elif args.model == 'resbilstm':
+    inputs = (400, 256)
+    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
 
 model = model_instance.build(inputs)
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
