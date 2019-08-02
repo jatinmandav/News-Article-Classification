@@ -59,6 +59,7 @@ parser.add_argument('--batch_size', '-b', default=64, help='Batch Size | Default
 parser.add_argument('--epochs', '-e', default=50, help='No of Epochs | Default: 50', type=int)
 parser.add_argument('--logs', '-l', default='logs', help='Path to Logs (weights, tensorboard) | Default: logs_[model_name]', type=str)
 parser.add_argument('--no_classes', '-c', default=4, help='Number of Classes | Default: 4', type=int)
+parser.add_argument('--hidden_size', '-hs', default=256, help='Hidden Size of LSTM Cell | Default: 256', type=int)
 parser.add_argument('--learning_rate', '-lr', default=0.001, help='Learning Rate | Default: 0.001', type=float)
 parser.add_argument('--train_val_split', '-tvs', default=0.2, help='Train vs Validation Split | Default: 0.2', type=float)
 parser.add_argument('--check_build', action='store_true', help='Check Model Build')
