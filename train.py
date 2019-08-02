@@ -83,7 +83,7 @@ log_dir = args.logs + '_' + args.model
 logging = TrainValTensorBoard(log_dir=log_dir)
 
 checkpoint = ModelCheckpoint(os.path.join(log_dir, 'ep{epoch:03d}-val_loss{val_loss:.3f}-val_acc{val_acc:.3f}.h5'),
-                            monitor='val_loss', save_weights_only=True, save_best_only=True, period=3)
+                            monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
 
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1)
 early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1)
