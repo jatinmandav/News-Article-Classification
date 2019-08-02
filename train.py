@@ -1,4 +1,6 @@
 from model_architectures.bilstm import BiLSTM
+from model_architectures.res_bilstm import ResBiLSTM
+
 from ReadData import ReadData
 
 from keras.optimizers import Adam
@@ -59,18 +61,24 @@ parser.add_argument('--logs', '-l', default='logs', help='Path to Logs (weights,
 parser.add_argument('--no_classes', '-c', default=4, help='Number of Classes | Default: 4', type=int)
 parser.add_argument('--learning_rate', '-lr', default=0.001, help='Learning Rate | Default: 0.001', type=float)
 parser.add_argument('--train_val_split', '-tvs', default=0.2, help='Train vs Validation Split | Default: 0.2', type=float)
-
+parser.add_argument('--check_build', action='store_true', help='Check Model Build')
 args = parser.parse_args()
 
 hidden_size = 512
 if args.model == 'bilstm':
     inputs = (400, 256)
     model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+elif args.model == 'resbilstm':
+    inputs = (400, 256)
+    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
 
 model = model_instance.build(inputs)
 model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
 
 model.summary()
+
+if args.check_build:
+    exit()
 
 embedding = {'type': args.embedding_type, 'path': args.embedding_path}
 reader = ReadData(path_file=args.dataset, embedding_config=embedding, data_shape=inputs, train_val_split=args.train_val_split)

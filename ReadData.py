@@ -7,9 +7,10 @@ from tqdm import tqdm
 
 class ReadData:
     def __init__(self, path_file, embedding_config, train_val_split=0.2, data_shape=(400, 256)):
-        self.path_file = path_file
-        self.train_val_split = train_val_split
-        self.read_file()
+        if path_file != None:
+            self.path_file = path_file
+            self.train_val_split = train_val_split
+            self.read_file()
 
         self.embedding_config = embedding_config
         self.load_embedding_model()
