@@ -65,7 +65,7 @@ parser.add_argument('--train_val_split', '-tvs', default=0.2, help='Train vs Val
 parser.add_argument('--check_build', action='store_true', help='Check Model Build')
 args = parser.parse_args()
 
-hidden_size = 512
+hidden_size = args.hidden_size
 if args.model == 'bilstm':
     inputs = (400, 256)
     model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
