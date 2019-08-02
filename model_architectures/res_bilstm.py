@@ -24,7 +24,7 @@ class ResBiLSTM:
         x = self.residual_block(x, 2)
         x = self.residual_block(x, 3)
 
-        x2 = Bidirectional(LSTM(self.hidden_size, return_sequences=False, kernel_initializer='glorot_uniform'), name='Bidirectional-1')(x)
+        x = Bidirectional(LSTM(self.hidden_size, return_sequences=False, kernel_initializer='glorot_uniform'), name='Bidirectional-1')(x)
 
         x = Dense(self.no_classes, kernel_initializer='glorot_uniform', name='output')(x)
         x = Activation('softmax', name='softmax')(x)
