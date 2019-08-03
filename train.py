@@ -1,5 +1,6 @@
 from model_architectures.bilstm import BiLSTM
 from model_architectures.res_bilstm import ResBiLSTM
+from model_architectures.sentence_pair import SentencePair
 
 from ReadData import ReadData
 
@@ -50,7 +51,7 @@ class TrainValTensorBoard(TensorBoard):
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--model', '-m', required=True, help='Name of model to train [bilstm]')
+parser.add_argument('--model', '-m', required=True, help='Name of model to train [bilstm, resbilstm, sentence_pair]')
 parser.add_argument('--dataset', '-d', default='Participants_Data_News_category/Data_Train.xlsx', help='Path to dataset')
 parser.add_argument('--embedding_path', '-ep', default='fasttext-embedding/skipgram-256-news-classification.fasttext',
                     help='Path to Embedding Model | Default: fasttext-embedding/skipgram-256-news-classification.fasttext')
@@ -63,6 +64,7 @@ parser.add_argument('--hidden_size', '-hs', default=256, help='Hidden Size of LS
 parser.add_argument('--learning_rate', '-lr', default=0.001, help='Learning Rate | Default: 0.001', type=float)
 parser.add_argument('--train_val_split', '-tvs', default=0.2, help='Train vs Validation Split | Default: 0.2', type=float)
 parser.add_argument('--check_build', action='store_true', help='Check Model Build')
+
 args = parser.parse_args()
 
 hidden_size = args.hidden_size
@@ -71,6 +73,9 @@ if args.model == 'bilstm':
     model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
 elif args.model == 'resbilstm':
     inputs = (400, 256)
+    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+elif args.model == 'sentence_pair':
+    inputs = [(400, 256), (256,)]
     model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
 
 model = model_instance.build(inputs)
@@ -82,7 +87,11 @@ if args.check_build:
     exit()
 
 embedding = {'type': args.embedding_type, 'path': args.embedding_path}
-reader = ReadData(path_file=args.dataset, embedding_config=embedding, data_shape=inputs, train_val_split=args.train_val_split)
+if args.model == 'sentence_pair':
+    reader = ReadData(path_file=args.dataset, embedding_config=embedding, data_shape=inputs, train_val_split=args.train_val_split, sentence_pair=True)
+else:
+    reader = ReadData(path_file=args.dataset, embedding_config=embedding, data_shape=inputs, train_val_split=args.train_val_split, sentence_pair=False)
+
 print('Reading Validation Data ..')
 val_x, val_y = reader.read_val()
 
@@ -97,6 +106,27 @@ checkpoint = ModelCheckpoint(os.path.join(log_dir, 'ep{epoch:03d}-val_loss{val_l
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1)
 early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1)
 
-model.fit_generator(generator=train_generator, steps_per_epoch=int(reader.train_size/args.batch_size),
-                    validation_data=(val_x, val_y), epochs=args.epochs,
-                    callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+if not args.model == 'sentence_pair':
+    model.fit_generator(generator=train_generator, steps_per_epoch=int(reader.train_size/args.batch_size),
+                        validation_data=(val_x, val_y), epochs=args.epochs,
+                        callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+else:
+    for epoch in range(args.epochs):
+        num_batches = int(reader.train_size/args.batch_size)
+
+        start_index = 0
+        epoch_loss, epoch_acc = [], []
+        for i in range(num_batches):
+            start_index = i*args.batch_size
+            epoch_x, epoch_y = reader.get_next_batch(start_index, args.batch_size)
+            [loss, acc] = model.train_on_batch(x, y)
+
+            epoch_loss.append(loss)
+            epoch_acc.append(acc)
+
+        [val_loss, val_acc] = model.test_on_batch(val_x, val_y)
+        
+        print('Epoch {}/{}: loss: {}, acc: {}, val_loss: {}, val_acc: {}'.format(
+                epoch+1, args.epochs, np.average(epoch_loss), np.average(epoch_acc), val_loss, val_acc))
+
+        model.save_weights(os.path.join(log_dir, 'ep{}-val_loss{}-val_acc{}.h5'.format(epoch+1, val_loss,val_acc)))

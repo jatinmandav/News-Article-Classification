@@ -6,7 +6,7 @@ import random
 from tqdm import tqdm
 
 class ReadData:
-    def __init__(self, path_file, embedding_config, train_val_split=0.2, data_shape=(400, 256)):
+    def __init__(self, path_file, embedding_config, train_val_split=0.2, data_shape=(400, 256), sentence_pair=False):
         if path_file != None:
             self.path_file = path_file
             self.train_val_split = train_val_split
@@ -16,6 +16,8 @@ class ReadData:
         self.load_embedding_model()
 
         self.data_shape = data_shape
+        self.sentence_pair = sentence_pair
+        self.label_map = {0: 'politics', 1: 'technology', 2:'entertainment', 3: 'business'}
 
     def read_file(self):
         self.data = pd.read_excel(self.path_file, sheet_name=None)['Sheet1']
@@ -44,7 +46,6 @@ class ReadData:
 
     def sent2vec(self, sent, max_len=400, dim=256):
         vector = []
-        label = []
         for i, word in enumerate(sent):
             if i < max_len:
                 vec = self.embedding[str(word)]
@@ -58,46 +59,105 @@ class ReadData:
 
         return np.array(vectors)
 
+    def get_next_batch(self, start_index, batch_size=64):
+        batch_x, batch_x2, batch_y = [], [], []
+        for i, sent in enumerate(self.train_x[start_index:start_index+batch_size]):
+            tokenized = nltk.word_tokenize(sent.lower())
+            x = self.sent2vec(tokenized, self.data_shape[0])
+
+            if self.sentence_pair:
+                for index in range(4):
+                    batch_x.append(x)
+                    batch_x2.append(self.embedding[self.label_map[index]])
+
+                    if index == int(self.train_y[start_index+i]):
+                        batch_y.append(1.)
+                    else:
+                        batch_y.append(0.)
+            else:
+                batch_x.append(x)
+                one_hot = np.zeros(4)
+                one_hot[int(self.train_y[start_index+i])] = 1.
+                batch_y.append(one_hot)
+
+        if self.sentence_pair:
+            x, y = [np.array(batch_x), np.array(batch_x2)], np.array(batch_y)
+        else:
+            x, y = np.array(batch_x), np.array(batch_y)
+
+        return x, y
+
     def generator(self, batch_size=64):
         while True:
             no_batches = int(self.train_size/batch_size)
             for i in range(no_batches):
                 start_index = i*batch_size
-                batch_x, batch_y = [], []
+                batch_x, batch_x2, batch_y = [], [], []
                 for i, sent in enumerate(self.train_x[start_index:start_index+batch_size]):
                     tokenized = nltk.word_tokenize(sent.lower())
-                    #print(tokenized)
                     x = self.sent2vec(tokenized, self.data_shape[0])
-                    batch_x.append(x)
-                    one_hot = np.zeros(4)
-                    one_hot[int(self.train_y[start_index+i])] = 1.
-                    batch_y.append(one_hot)
 
-                x, y = np.array(batch_x), np.array(batch_y)
+                    if self.sentence_pair:
+                        for index in range(4):
+                            batch_x.append(x)
+                            batch_x2.append(self.embedding[self.label_map[index]])
+
+                            if index == int(self.train_y[start_index+i]):
+                                batch_y.append(1.)
+                            else:
+                                batch_y.append(0.)
+                    else:
+                        batch_x.append(x)
+                        one_hot = np.zeros(4)
+                        one_hot[int(self.train_y[start_index+i])] = 1.
+                        batch_y.append(one_hot)
+
+                if self.sentence_pair:
+                    x, y = [np.array(batch_x), np.array(batch_x2)], np.array(batch_y)
+                else:
+                    x, y = np.array(batch_x), np.array(batch_y)
 
                 yield x, y
 
     def read_val(self):
-        val_x, val_y = [], []
+        val_x, val_x2, val_y = [], [], []
         i = 0
         for sent in tqdm(self.val_x):
             tokenized = nltk.word_tokenize(sent.lower())
             x = self.sent2vec(tokenized, self.data_shape[0])
-            val_x.append(x)
 
-            one_hot = np.zeros(4)
-            one_hot[int(self.val_y[i])] = 1.
-            val_y.append(one_hot)
+            if self.sentence_pair:
+                for index in range(4):
+                    val_x.append(x)
+                    val_x2.append(self.embedding[self.label_map[index]])
+
+                    if index == int(self.val_y[i]):
+                        val_y.append(1.)
+                    else:
+                        val_y.append(0.)
+            else:
+                val_x.append(x)
+                one_hot = np.zeros(4)
+                one_hot[int(self.val_y[i])] = 1.
+                val_y.append(one_hot)
+
             i += 1
 
-        x, y = np.array(val_x), np.array(val_y)
+        if self.sentence_pair:
+            x, y = [np.array(val_x), np.array(val_x2)], np.array(val_y)
+        else:
+            x, y = np.array(val_x), np.array(val_y)
 
         return x, y
 
 if __name__ == '__main__':
     embedding = {'type': 'fasttext', 'path': 'fasttext-embedding/skipgram-256-news-classification.fasttext'}
-    reader = ReadData('Participants_Data_News_category/Data_Train.xlsx', embedding)
-    generator = reader.generator()
+    reader = ReadData('Participants_Data_News_category/Data_Train.xlsx', embedding, sentence_pair=True)
 
-    for x, y in generator:
-        print(x.shape, y.shape)
+    x, y = reader.get_next_batch(0)
+    print(x[0].shape, x[1].shape, y.shape)
+
+    #generator = reader.generator()
+
+    #for x, y in generator:
+    #    print(x[0].shape, x[1].shape, y.shape)
