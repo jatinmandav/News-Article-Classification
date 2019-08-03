@@ -121,7 +121,7 @@ else:
         for i in range(num_batches):
             start_index = i*args.batch_size
             epoch_x, epoch_y = reader.get_next_batch(start_index, args.batch_size)
-            [loss, acc] = model.train_on_batch(x, y)
+            [loss, acc] = model.train_on_batch(epoch_x, epoch_y)
 
             epoch_loss.append(loss)
             epoch_acc.append(acc)
