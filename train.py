@@ -116,6 +116,9 @@ if not args.model == 'sentence_pair':
                         validation_data=(val_x, val_y), epochs=args.epochs,
                         callbacks=[logging, checkpoint, reduce_lr, early_stopping])
 else:
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+    
     for epoch in range(args.epochs):
         num_batches = int(reader.train_size/args.batch_size)
 
