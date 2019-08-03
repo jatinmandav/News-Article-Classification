@@ -76,9 +76,11 @@ elif args.model == 'resbilstm':
     model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
 elif args.model == 'sentence_pair':
     inputs = [(400, 256), (256,)]
-    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+    model_instance = SentencePair(hidden_size=hidden_size, no_classes=args.no_classes)
+
 
 model = model_instance.build(inputs)
+
 model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
 
 model.summary()
@@ -125,7 +127,7 @@ else:
             epoch_acc.append(acc)
 
         [val_loss, val_acc] = model.test_on_batch(val_x, val_y)
-        
+
         print('Epoch {}/{}: loss: {}, acc: {}, val_loss: {}, val_acc: {}'.format(
                 epoch+1, args.epochs, np.average(epoch_loss), np.average(epoch_acc), val_loss, val_acc))
 
