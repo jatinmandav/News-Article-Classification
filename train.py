@@ -81,8 +81,10 @@ elif args.model == 'sentence_pair':
 
 model = model_instance.build(inputs)
 
-model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
-
+if args.no_classes > 1:
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
+else:
+    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
 model.summary()
 
 if args.check_build:
