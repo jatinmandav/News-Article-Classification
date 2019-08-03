@@ -85,8 +85,8 @@ class ReadData:
                 batch_y.append(one_hot)
 
         if self.sentence_pair:
-            x, y = np.hstack([batch_x, batch_x2]), np.array(batch_y)
-            #x, y = [np.array(batch_x), np.array(batch_x2)], np.array(batch_y)
+            #x, y = np.hstack([batch_x, batch_x2]), np.array(batch_y)
+            x, y = [np.array(batch_x), np.array(batch_x2)], np.array(batch_y)
         else:
             x, y = np.array(batch_x), np.array(batch_y)
 
