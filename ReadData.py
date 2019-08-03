@@ -92,6 +92,35 @@ class ReadData:
 
         return x, y
 
+    def get_next_val_batch(self, start_index, batch_size=64):
+        batch_x, batch_x2, batch_y = [], [], []
+        for i, sent in enumerate(self.val_x[start_index:start_index+batch_size]):
+            tokenized = nltk.word_tokenize(sent.lower())
+            x = self.sent2vec(tokenized)
+
+            if self.sentence_pair:
+                for index in range(4):
+                    batch_x.append(x)
+                    batch_x2.append(self.embedding[self.label_map[index]])
+
+                    if index == int(self.val_y[start_index+i]):
+                        batch_y.append(1.)
+                    else:
+                        batch_y.append(0.)
+            else:
+                batch_x.append(x)
+                one_hot = np.zeros(4)
+                one_hot[int(self.val_y[start_index+i])] = 1.
+                batch_y.append(one_hot)
+
+        if self.sentence_pair:
+            #x, y = np.hstack([batch_x, batch_x2]), np.array(batch_y)
+            x, y = [np.array(batch_x), np.array(batch_x2)], np.array(batch_y)
+        else:
+            x, y = np.array(batch_x), np.array(batch_y)
+
+        return x, y
+
     def generator(self, batch_size=64):
         while True:
             no_batches = int(self.train_size/batch_size)

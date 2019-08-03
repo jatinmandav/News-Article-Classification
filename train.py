@@ -128,9 +128,20 @@ else:
             epoch_loss.append(loss)
             epoch_acc.append(acc)
 
-        [val_loss, val_acc] = model.test_on_batch(val_x, val_y)
+
+        num_batches = int(reader.val_size/args.batch_size)
+        start_index = 0
+        val_loss, val_acc = [], []
+        for i in range(num_batches):
+            start_index = i*args.batch_size
+            epoch_x, epoch_y = reader.get_next_val_batch(start_index, args.batch_size)
+            [loss, acc] = model.test_on_batch(epoch_x, epoch_y)
+
+            val_loss.append(loss)
+            val_acc.append(acc)
 
         print('Epoch {}/{}: loss: {}, acc: {}, val_loss: {}, val_acc: {}'.format(
-                epoch+1, args.epochs, np.average(epoch_loss), np.average(epoch_acc), val_loss, val_acc))
+                epoch+1, args.epochs, np.average(epoch_loss), np.average(epoch_acc),
+                np.average(val_loss), np.average(val_acc)))
 
-        model.save_weights(os.path.join(log_dir, 'ep{}-val_loss{}-val_acc{}.h5'.format(epoch+1, val_loss,val_acc)))
+        model.save_weights(os.path.join(log_dir, 'ep{}-val_loss{}-val_acc{}.h5'.format(epoch+1, np.average(val_loss), np.average(val_acc))))
