@@ -15,7 +15,11 @@ class ReadData:
         self.embedding_config = embedding_config
         self.load_embedding_model()
 
-        self.data_shape = data_shape
+        if sentence_pair:
+            self.max_len = data_shape[0][0]
+        else:
+            self.max_len = data_shape[0]
+
         self.sentence_pair = sentence_pair
         self.label_map = {0: 'politics', 1: 'technology', 2:'entertainment', 3: 'business'}
 
@@ -47,7 +51,7 @@ class ReadData:
     def sent2vec(self, sent, max_len=400, dim=256):
         vector = []
         for i, word in enumerate(sent):
-            if i < max_len:
+            if i < self.max_len:
                 vec = self.embedding[str(word)]
                 vector.append(vec)
 
@@ -63,7 +67,7 @@ class ReadData:
         batch_x, batch_x2, batch_y = [], [], []
         for i, sent in enumerate(self.train_x[start_index:start_index+batch_size]):
             tokenized = nltk.word_tokenize(sent.lower())
-            x = self.sent2vec(tokenized, self.data_shape[0])
+            x = self.sent2vec(tokenized)
 
             if self.sentence_pair:
                 for index in range(4):
@@ -96,7 +100,7 @@ class ReadData:
                 batch_x, batch_x2, batch_y = [], [], []
                 for i, sent in enumerate(self.train_x[start_index:start_index+batch_size]):
                     tokenized = nltk.word_tokenize(sent.lower())
-                    x = self.sent2vec(tokenized, self.data_shape[0])
+                    x = self.sent2vec(tokenized)
 
                     if self.sentence_pair:
                         for index in range(4):
@@ -125,7 +129,7 @@ class ReadData:
         i = 0
         for sent in tqdm(self.val_x):
             tokenized = nltk.word_tokenize(sent.lower())
-            x = self.sent2vec(tokenized, self.data_shape[0])
+            x = self.sent2vec(tokenized)
 
             if self.sentence_pair:
                 for index in range(4):
