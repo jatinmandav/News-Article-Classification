@@ -59,25 +59,26 @@ parser.add_argument('--embedding_path', '-ep', default='fasttext-embedding/skipg
 parser.add_argument('--embedding_type', '-et', default='fasttext', help='Embedding type [fasttext] | Default: fasttext')
 parser.add_argument('--batch_size', '-b', default=64, help='Batch Size | Default: 64', type=int)
 parser.add_argument('--epochs', '-e', default=50, help='No of Epochs | Default: 50', type=int)
-parser.add_argument('--logs', '-l', default='logs', help='Path to Logs (weights, tensorboard) | Default: logs_[model_name]', type=str)
+parser.add_argument('--logs', '-l', help='Path to Logs (weights, tensorboard) | Default: [model_name]', type=str)
 parser.add_argument('--no_classes', '-c', default=4, help='Number of Classes | Default: 4', type=int)
 parser.add_argument('--hidden_size', '-hs', default=256, help='Hidden Size of LSTM Cell | Default: 256', type=int)
 parser.add_argument('--learning_rate', '-lr', default=0.001, help='Learning Rate | Default: 0.001', type=float)
 parser.add_argument('--train_val_split', '-tvs', default=0.2, help='Train vs Validation Split | Default: 0.2', type=float)
 parser.add_argument('--check_build', action='store_true', help='Check Model Build')
+parser.add_argument('--use_attention', '-a', action='store_true', help='Whether to add Attention Layer')
 
 args = parser.parse_args()
 
 hidden_size = args.hidden_size
 if args.model == 'bilstm':
     inputs = (400, 256)
-    model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+    model_instance = BiLSTM(hidden_size=hidden_size, no_classes=args.no_classes, use_attention=args.use_attention)
 elif args.model == 'resbilstm':
     inputs = (400, 256)
-    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes)
+    model_instance = ResBiLSTM(hidden_size=hidden_size, no_classes=args.no_classes, use_attention=args.use_attention)
 elif args.model == 'sentence_pair':
     inputs = [(400, 256), (256,)]
-    model_instance = SentencePair(hidden_size=hidden_size, no_classes=args.no_classes)
+    model_instance = SentencePair(hidden_size=hidden_size, no_classes=args.no_classes, use_attention=args.use_attention)
 
 
 model = model_instance.build(inputs)
@@ -102,7 +103,11 @@ val_x, val_y = reader.read_val()
 
 train_generator = reader.generator()
 
-log_dir = args.logs + '_' + args.model
+if args.logs:
+    log_dir = args.model
+else:
+    logs_dir = args.logs
+
 logging = TrainValTensorBoard(log_dir=log_dir)
 
 checkpoint = ModelCheckpoint(os.path.join(log_dir, 'ep{epoch:03d}-val_loss{val_loss:.3f}-val_acc{val_acc:.3f}.h5'),
@@ -118,7 +123,7 @@ if not args.model == 'sentence_pair':
 else:
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
-    
+
     for epoch in range(args.epochs):
         num_batches = int(reader.train_size/args.batch_size)
 
