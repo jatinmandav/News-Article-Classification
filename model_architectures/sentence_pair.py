@@ -4,7 +4,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Model
 from keras.layers.core import Activation
 
-from attention import AttentionLayer, AttentionWithContext
+from model_architectures.attention import AttentionLayer, AttentionWithContext
 
 class SentencePair:
     def __init__(self, hidden_size=512, no_classes=1, use_attention=False):
