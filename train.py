@@ -4,7 +4,7 @@ from model_architectures.sentence_pair import SentencePair
 
 from ReadData import ReadData
 
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSProp
 from keras.models import Model
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 import tensorflow as tf
@@ -83,10 +83,12 @@ elif args.model == 'sentence_pair':
 
 model = model_instance.build(inputs)
 
+optimizer = RMSProp(args.learning_rate)
+
 if args.no_classes > 1:
-    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 else:
-    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=args.learning_rate), metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 model.summary()
 
 if args.check_build:
