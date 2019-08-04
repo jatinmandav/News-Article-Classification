@@ -4,7 +4,7 @@ from keras.models import Model
 
 from keras.layers.core import Activation
 
-from model_architectures.attention import AttentionLayer
+from model_architectures.attention import AttentionLayer, AttentionWithContext
 
 class ResBiLSTM:
     def __init__(self, hidden_size=512, no_classes=4, use_attention=False):
@@ -30,9 +30,12 @@ class ResBiLSTM:
         x = Bidirectional(LSTM(self.hidden_size, return_sequences=True, kernel_initializer='glorot_uniform'), name='Bidirectional-1')(x)
 
         if self.use_attention:
-            x = AttentionLayer(x)
-
-        x = GlobalAveragePooling1D()(x)
+            #x1 = AttentionLayer(x1)
+            x1 = AttentionWithContext()(x1)
+        else:
+            x2 = GlobalMaxPooling1D()(x1)
+            x1 = GlobalAveragePooling1D()(x1)
+            x1 = concatenate([x1, x2])
 
         x = Dense(self.no_classes, kernel_initializer='glorot_uniform', name='output')(x)
         x = Activation('softmax', name='softmax')(x)
