@@ -103,10 +103,7 @@ val_x, val_y = reader.read_val()
 
 train_generator = reader.generator()
 
-if args.logs:
-    log_dir = args.model
-else:
-    logs_dir = args.logs
+log_dir = args.model
 
 logging = TrainValTensorBoard(log_dir=log_dir)
 
