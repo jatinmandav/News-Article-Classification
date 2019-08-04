@@ -1,4 +1,5 @@
-from keras.layers import Bidirectional, LSTM, Input, RepeatVector, Dense, concatenate, GlobalAveragePooling1D
+from keras.layers import Bidirectional, LSTM, Input, RepeatVector, Dense
+from keras.layers import GlobalAveragePooling1D, concatenate, GlobalMaxPooling1D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Model
 
