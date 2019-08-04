@@ -32,11 +32,11 @@ class ResBiLSTM:
 
         if self.use_attention:
             #x1 = AttentionLayer(x1)
-            x1 = AttentionWithContext()(x1)
+            x = AttentionWithContext()(x)
         else:
-            x2 = GlobalMaxPooling1D()(x1)
-            x1 = GlobalAveragePooling1D()(x1)
-            x1 = concatenate([x1, x2])
+            x1 = GlobalMaxPooling1D()(x)
+            x = GlobalAveragePooling1D()(x)
+            x = concatenate([x1, x])
 
         x = Dense(self.no_classes, kernel_initializer='glorot_uniform', name='output')(x)
         x = Activation('softmax', name='softmax')(x)
